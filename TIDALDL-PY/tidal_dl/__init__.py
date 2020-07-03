@@ -11,7 +11,7 @@ from tidal_dl.session import TidalMobileSession
 from tidal_dl.tidal import TidalConfig
 from tidal_dl.tidal import TidalAccount, TidalToken
 from tidal_dl.download import Download
-from tidal_dl.printhelper import printMenu, printChoice2, printErr, printWarning, LOG
+from tidal_dl.printhelper import printMenu, printChoice2, printErr, printWarning, printSettingsMenu, LOG
 
 # TIDAL_DL_VERSION = "2020.6.28.2"
 TIDAL_DL_VERSION = pipHelper.getInstalledVersion("tidal-dl")
@@ -92,31 +92,28 @@ def showConfig():
 
 def setting():
     cf = TidalConfig()
-    print("----------------Settings----------------")
-    print("Output directory                 :\t" + cf.outputdir)
-    print("Sound Quality                    :\t" + cf.quality)
-    print("Video Resolution                 :\t" + cf.resolution)
-    print("Download Threads                 :\t" + cf.threadnum)
-    print("Only M4a                         :\t" + cf.onlym4a)
-    print("Show download progress           :\t" + cf.showprogress + "(enable when threadnum=1)")
-    print("Use hyphens                      :\t" + cf.addhyphen + "(between number and title)")
-    print("Add year                         :\t" + cf.addyear + "(in album title)")
-    print("Add explicit tag                 :\t" + cf.addexplicit)
-    print("Playlist songs in artist folders :\t" + cf.plfile2arfolder + "(organized with artist folder)")
-    print("Include singles                  :\t" + cf.includesingle + "(download artist album)")
-    print("Save covers                      :\t" + cf.savephoto)
-    print("ArtistName Before Track-Title    :\t" + cf.artistbeforetitle)
-    print("Add ID Before AlbumFolderName    :\t" + cf.addAlbumidbeforefolder)
+    printSettingsMenu(cf)
     while True:
+        setting_index = myinputInt("Choose Setting(Enter '0' Change All):".ljust(12), 0)
+        if setting_index > 14 or setting_index < 0:
+            printErr(0, "Setting Err!")
+            continue
+        break
+    while setting_index == 0 or setting_index == 1:
         outputdir = myinput("Output directory(Enter '0' Unchanged):".ljust(12))
         if outputdir == '0':
             outputdir = cf.outputdir
-            break
         if os.path.isdir(outputdir) == False:
             printErr(0, "Path is Err!")
             continue
+        cf.set_outputdir(outputdir)
+
+        pathHelper.mkdirs(outputdir + "/Album/")
+        pathHelper.mkdirs(outputdir + "/Playlist/")
+        pathHelper.mkdirs(outputdir + "/Video/")
+        pathHelper.mkdirs(outputdir + "/Favorite/")
         break
-    while True:
+    while setting_index == 0 or setting_index == 2:
         index = myinputInt("Download Quality(0-LOW,1-HIGH,2-LOSSLESS,3-HI_RES):".ljust(12), 999)
         if index > 3 or index < 0:
             printErr(0, "Quality Err!")
@@ -129,8 +126,9 @@ def setting():
             quality = 'LOSSLESS'
         if index == 3:
             quality = 'HI_RES'
+        cf.set_quality(quality)
         break
-    while True:
+    while setting_index == 0 or setting_index == 3:
         index = myinputInt("Video resolution(0-1080,1-720,2-480,3-360,4-240):".ljust(12), 99)
         if index > 4 or index < 0:
             printErr(0, "Resolution Err")
@@ -145,19 +143,25 @@ def setting():
             resolution = '360'
         if index == 4:
             resolution = '240'
+        cf.set_resolution(resolution)
         break
-    while True:
+    while setting_index == 0 or setting_index == 4:
         threadnum = myinput("Number of download threads:".ljust(12))
         if cf.valid_threadnum(threadnum) == False:
             printErr(0, "ThreadNum Err")
             continue
+        cf.set_threadnum(threadnum)
         break
-
-    status = myinputInt("Convert Mp4 to M4a(0-No, 1-Yes):".ljust(12), 0)
-    status2 = myinputInt("Show download progress (only available on single thread)(0-No, 1-Yes):".ljust(12), 0)
-    status3 = myinputInt("Use hyphens instead of spaces in file names(0-No, 1-Yes):".ljust(12), 0)
-
-    while True:
+    if setting_index == 0 or setting_index == 5:
+        status = myinputInt("Convert Mp4 to M4a(0-No, 1-Yes):".ljust(12), 0)
+        cf.set_onlym4a(status)
+    if setting_index == 0 or setting_index == 6:
+        status2 = myinputInt("Show download progress (only available on single thread)(0-No, 1-Yes):".ljust(12), 0)
+        cf.set_showprogress(status2)
+    if setting_index == 0 or setting_index == 7:
+        status3 = myinputInt("Use hyphens instead of spaces in file names(0-No, 1-Yes):".ljust(12), 0)
+        cf.set_addhyphen(status3)
+    while setting_index == 0 or setting_index == 8:
         index = myinputInt("Add year to album folder names(0-No, 1-Before, 2-After):".ljust(12), 99)
         if index > 2 or index < 0:
             printErr(0, "Addyear input Err")
@@ -168,34 +172,27 @@ def setting():
             addyear = 'Before'
         if index == 2:
             addyear = 'After'
+        cf.set_addyear(addyear)
         break
 
-    status5 = myinputInt("Download playlist songs in artist folder structure? (0-No,1-Yes):".ljust(12), 0)
-    status6 = myinputInt("Add explicit tag to file names(0-No, 1-Yes):".ljust(12), 0)
-    status7 = myinputInt("Include singles and EPs when downloading an artist's albums (0-No, 1-Yes):".ljust(12), 0)
-    status8 = myinputInt("Save covers(0-No, 1-Yes):".ljust(12), 0)
-    status9 = myinputInt("Add artistName before trackTitle(0-No, 1-Yes):".ljust(12), 0)
-    status10 = myinputInt("Add ID Before AlbumFolderName(0-No, 1-Yes):".ljust(12), 0)
-
-    cf.set_outputdir(outputdir)
-    cf.set_quality(quality)
-    cf.set_resolution(resolution)
-    cf.set_threadnum(threadnum)
-    cf.set_onlym4a(status)
-    cf.set_showprogress(status2)
-    cf.set_addhyphen(status3)
-    cf.set_addyear(addyear)
-    cf.set_plfile2arfolder(status5)
-    cf.set_addexplicit(status6)
-    cf.set_includesingle(status7)
-    cf.set_savephoto(status8)
-    cf.set_artistbeforetitle(status9)
-    cf.set_addAlbumidbeforefolder(status10)
-
-    pathHelper.mkdirs(outputdir + "/Album/")
-    pathHelper.mkdirs(outputdir + "/Playlist/")
-    pathHelper.mkdirs(outputdir + "/Video/")
-    pathHelper.mkdirs(outputdir + "/Favorite/")
+    if setting_index == 0 or setting_index == 9:
+        status6 = myinputInt("Add explicit tag to file names(0-No, 1-Yes):".ljust(12), 0)
+        cf.set_addexplicit(status6)
+    if setting_index == 0 or setting_index == 10:
+        status5 = myinputInt("Download playlist songs in artist folder structure? (0-No,1-Yes):".ljust(12), 0)
+        cf.set_plfile2arfolder(status5)
+    if setting_index == 0 or setting_index == 11:
+        cf.set_includesingle(status7)
+        status7 = myinputInt("Include singles and EPs when downloading an artist's albums (0-No, 1-Yes):".ljust(12), 0)
+    if setting_index == 0 or setting_index == 12:
+        status8 = myinputInt("Save covers(0-No, 1-Yes):".ljust(12), 0)
+        cf.set_savephoto(status8)
+    if setting_index == 0 or setting_index == 13:
+        status9 = myinputInt("Add artistName before trackTitle(0-No, 1-Yes):".ljust(12), 0)
+        cf.set_artistbeforetitle(status9)
+    if setting_index == 0 or setting_index == 14:
+        status10 = myinputInt("Add ID Before AlbumFolderName(0-No, 1-Yes):".ljust(12), 0)
+        cf.set_addAlbumidbeforefolder(status10)
     return
 
 
